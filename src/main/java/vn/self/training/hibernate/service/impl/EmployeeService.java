@@ -2,21 +2,20 @@ package vn.self.training.hibernate.service.impl;
 
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import org.springframework.stereotype.Service;
 import vn.self.training.hibernate.dao.IEmployeeDao;
 import vn.self.training.hibernate.dao.impl.EmployeeDaoImpl;
 import vn.self.training.hibernate.model.Employee;
 import vn.self.training.hibernate.service.IEmployeeService;
+import vn.self.training.hibernate.util.HibernateUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Service
 public class EmployeeService implements IEmployeeService {
 
-    private static IEmployeeDao employeeDao;
-
-    private Session session;
-
-    private Transaction transaction;
+    private IEmployeeDao employeeDao;
 
     public EmployeeService() {
         employeeDao = new EmployeeDaoImpl();
@@ -24,17 +23,49 @@ public class EmployeeService implements IEmployeeService {
 
     @Override
     public void addEmployee(Employee employee) {
-        session = employeeDao.openSession();
-        transaction = null;
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        Transaction transaction = null;
         try {
             transaction = session.beginTransaction();
-            employeeDao.save(employee);
+            employeeDao.save(session, employee);
             transaction.commit();
         } catch (Exception e) {
             if (transaction != null) transaction.rollback();
             throw e;
         } finally {
-            employeeDao.closeSession();
+            session.close();
+        }
+    }
+
+    @Override
+    public void updateEmployee(Employee e) {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        Transaction transaction = null;
+        try {
+            transaction = session.beginTransaction();
+            employeeDao.update(session, e);
+            transaction.commit();
+        } catch (Exception ex) {
+            if (transaction != null) transaction.rollback();
+            throw ex;
+        } finally {
+            session.close();
+        }
+    }
+
+    @Override
+    public void removeEmployee(Long id) {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        Transaction transaction = null;
+        try {
+            transaction = session.beginTransaction();
+            employeeDao.delete(session, id);
+            transaction.commit();
+        } catch (Exception ex) {
+            if (transaction != null) transaction.rollback();
+            throw ex;
+        } finally {
+            session.close();
         }
     }
 
@@ -42,18 +73,17 @@ public class EmployeeService implements IEmployeeService {
     public Employee findByCode(String code) {
         Employee emp;
 
-        session = employeeDao.openSession();
-        transaction = null;
-
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        Transaction transaction = null;
         try {
             transaction = session.beginTransaction();
-            emp = employeeDao.findByCode(code);
+            emp = employeeDao.findByCode(session, code);
             transaction.commit();
         } catch (Exception e) {
             if (transaction != null) transaction.rollback();
             throw e;
         } finally {
-            employeeDao.closeSession();
+            session.close();
         }
 
         return emp;
@@ -63,12 +93,11 @@ public class EmployeeService implements IEmployeeService {
     public List<String> queryInfoEmployee(String query) {
         List<String> sEmployees;
 
-        session = employeeDao.openSession();
-        transaction = null;
-
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        Transaction transaction = null;
         try {
             transaction = session.beginTransaction();
-            List<Employee> employees = employeeDao.queryByCodeOrFirstName(query);
+            List<Employee> employees = employeeDao.queryByCodeOrFirstName(session, query);
             sEmployees = new ArrayList<>();
             for (Employee e : employees) {
                 StringBuilder s = new StringBuilder();
@@ -81,7 +110,7 @@ public class EmployeeService implements IEmployeeService {
             if (transaction != null) transaction.rollback();
             throw e;
         } finally {
-            employeeDao.closeSession();
+            session.close();
         }
 
         return sEmployees;

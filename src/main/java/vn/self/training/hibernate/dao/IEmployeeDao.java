@@ -6,13 +6,15 @@ import vn.self.training.hibernate.model.Employee;
 import java.util.List;
 
 public interface IEmployeeDao {
-    Session openSession();
+    Employee save(Session session, Employee e);
 
-    void closeSession();
+    Employee update(Session session, Employee e);
 
-    Employee save(Employee e);
+    void delete(Session session, Long id);
 
-    Employee findByCode(String code);
+    Employee findByCode(Session session, String code);
 
-    List<Employee> queryByCodeOrFirstName(String codeOrFirstName);
+    List<Employee> findByCodes(Session session, List<String> codes);
+
+    List<Employee> queryByCodeOrFirstName(Session session, String codeOrFirstName);
 }

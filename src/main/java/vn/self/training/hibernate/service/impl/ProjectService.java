@@ -1,97 +1,154 @@
 package vn.self.training.hibernate.service.impl;
 
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.stereotype.Service;
-//import vn.hcmut.ap.pim.dto.ProjectDto;
-//import vn.hcmut.ap.pim.persistence.model.Employee;
-//import vn.hcmut.ap.pim.persistence.model.Project;
-//import vn.hcmut.ap.pim.persistence.repository.IEmployeeRepository;
-//import vn.hcmut.ap.pim.persistence.repository.IGroupRepository;
-//import vn.hcmut.ap.pim.persistence.repository.IProjectRepository;
-//import vn.hcmut.ap.pim.service.IProjectService;
-//import vn.hcmut.ap.pim.util.DateTimeUtil;
-//
-//import javax.transaction.Transactional;
-//import java.text.ParseException;
-//import java.util.Arrays;
-//import java.util.HashSet;
-//import java.util.List;
-//import java.util.Set;
-//
-//@Service
-//@Transactional
-//public class ProjectService implements IProjectService {
-//    @Autowired
-//    private IProjectRepository projectRepository;
-//    @Autowired
-//    private IEmployeeRepository employeeRepository;
-//    @Autowired
-//    private IGroupRepository groupRepository;
-//
-//    @Override
-//    public List<Project> findAll() {
-//        return projectRepository.findAll();
-//    }
-//
-//    @Override
-//    public Project findById(Long id) {
-//        return projectRepository.findById(id).get();
-//    }
-//
-//    @Override
-//    public Project findByProjectNumber(int projectNumber) {
-//        return projectRepository.findByProjectNumber(projectNumber).get();
-//    }
-//
-//    @Override
-//    public void deleteById(Long id) {
-//        projectRepository.deleteById(id);
-//    }
-//
-//    @Override
-//    public void updateProject(ProjectDto projectDto) throws ParseException {
-//        Project proj = projectRepository.getOne(projectDto.getId());
-//        // update project info
-//        String endDate = setProjectInfo(projectDto, proj);
-//        if (!"".equals(endDate)) {
-//            proj.setEndDate(DateTimeUtil.parseStringToDate(projectDto.getEndDate()));
-//        }
-//        String members = projectDto.getEmployees().trim();
-//        proj.setEmployees(getEmployees(members));
-//
-//        // save project
-//        projectRepository.save(proj);
-//    }
-//
-//    @Override
-//    public void createProject(ProjectDto projectDto) throws ParseException{
-//        Project newProject = new Project();
-//
-//        // create new project object
-//        newProject.setProjectNumber(projectDto.getProjectNumber());
-//        String endDate = setProjectInfo(projectDto, newProject);
-//        if (!"".equals(endDate.trim())) {
-//            newProject.setEndDate(DateTimeUtil.parseStringToDate(projectDto.getEndDate()));
-//        }
-//
-//        String members = projectDto.getEmployees();
-//        newProject.setEmployees(getEmployees(members));
-//
-//        // save new project
-//        projectRepository.save(newProject);
-//    }
-//
-//    private String setProjectInfo(ProjectDto projectDto, Project newProject) throws ParseException {
-//        newProject.setName(projectDto.getName());
-//        newProject.setCustomer(projectDto.getCustomer());
-//        newProject.setGroup(groupRepository.findById(projectDto.getGroupId()).get());
-//        newProject.setStatus(projectDto.getStatus());
-//        newProject.setStartDate(DateTimeUtil.parseStringToDate(projectDto.getStartDate()));
-//        return projectDto.getEndDate();
-//    }
-//
-//    private Set<Employee> getEmployees(String sEmployees) {
-//        String[] aEmployee = sEmployees.split(",");
-//        return  new HashSet<>(employeeRepository.findByCodes(Arrays.asList(aEmployee)));
-//    }
-//}
+import org.hibernate.Hibernate;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
+import org.springframework.stereotype.Service;
+import vn.self.training.hibernate.dao.IProjectDao;
+import vn.self.training.hibernate.dao.impl.ProjectDaoImpl;
+import vn.self.training.hibernate.dto.ProjectDto;
+import vn.self.training.hibernate.model.Project;
+import vn.self.training.hibernate.service.IProjectService;
+import vn.self.training.hibernate.util.HibernateUtil;
+
+import java.text.ParseException;
+import java.util.List;
+
+@Service
+public class ProjectService implements IProjectService {
+    private IProjectDao projectDao;
+
+    public ProjectService() {
+        projectDao = new ProjectDaoImpl();
+    }
+
+    @Override
+    public List<Project> findAll() {
+        List<Project> projects;
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        Transaction transaction = null;
+        try {
+            transaction = session.beginTransaction();
+            projects = projectDao.findAll(session);
+            for (Project p : projects) {
+                Hibernate.initialize(p.getEmployees());
+            }
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null) transaction.rollback();
+            throw e;
+        } finally {
+            session.close();
+        }
+
+        return projects;
+    }
+
+    @Override
+    public Project findById(Long id) {
+        Project project;
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        Transaction transaction = null;
+        try {
+            transaction = session.beginTransaction();
+            project = projectDao.findById(session, id);
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null) transaction.rollback();
+            throw e;
+        } finally {
+            session.close();
+        }
+
+        return project;
+    }
+
+    @Override
+    public List<Project> findByIds(List<Long> ids) {
+        List<Project> projects;
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        Transaction transaction = null;
+        try {
+            transaction = session.beginTransaction();
+            projects = projectDao.findByIds(session, ids);
+            for (Project p : projects) {
+                Hibernate.initialize(p.getEmployees());
+            }
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null) transaction.rollback();
+            throw e;
+        } finally {
+            session.close();
+        }
+
+        return projects;
+    }
+
+    @Override
+    public Project findByProjectNumber(int projectNumber) {
+        Project project;
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        Transaction transaction = null;
+        try {
+            transaction = session.beginTransaction();
+            project = projectDao.findByProjectNumber(session, projectNumber);
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null) transaction.rollback();
+            throw e;
+        } finally {
+            session.close();
+        }
+
+        return project;
+    }
+
+    @Override
+    public void updateProject(ProjectDto projectDto) throws ParseException {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        Transaction transaction = null;
+        try {
+            transaction = session.beginTransaction();
+            projectDao.updateProject(session, projectDto);
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null) transaction.rollback();
+            throw e;
+        } finally {
+            session.close();
+        }
+    }
+
+    @Override
+    public void createProject(ProjectDto projectDto) throws ParseException {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        Transaction transaction = null;
+        try {
+            transaction = session.beginTransaction();
+            projectDao.createProject(session, projectDto);
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null) transaction.rollback();
+            throw e;
+        } finally {
+            session.close();
+        }
+    }
+
+    @Override
+    public void deleteById(Long id) {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        Transaction transaction = null;
+        try {
+            transaction = session.beginTransaction();
+            projectDao.deleteById(session, id);
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null) transaction.rollback();
+            throw e;
+        } finally {
+            session.close();
+        }
+    }
+}

@@ -11,6 +11,8 @@ public interface IProjectService {
 
     Project findById(Long id);
 
+    List<Project> findByIds(List<Long> ids);
+
     Project findByProjectNumber(int projectNumber);
 
     void updateProject(ProjectDto projectDto) throws ParseException;
