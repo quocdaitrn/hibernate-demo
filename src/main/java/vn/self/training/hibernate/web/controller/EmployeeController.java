@@ -11,7 +11,6 @@ import vn.self.training.hibernate.response.ResponseMessage;
 import vn.self.training.hibernate.service.IEmployeeService;
 import vn.self.training.hibernate.service.IProjectService;
 
-import java.util.HashSet;
 import java.util.List;
 
 @RestController
@@ -42,17 +41,9 @@ public class EmployeeController {
                 .body(new ResponseMessage(ResponseCode.SUCCESS, "Success"));
     }
 
-    @PutMapping
-    public ResponseEntity<ResponseMessage> updateEmployee(@RequestBody EmployeeDto emp) {
-        Employee e = new Employee();
-        e.setId(emp.getId());
-        e.setCode(emp.getCode());
-        e.setFirstName(emp.getFirstName());
-        e.setLastName(emp.getLastName());
-        e.setBirthDate(emp.getBirthDate());
-        e.setProjects(new HashSet<>(projectService.findByIds(emp.getProjects())));
-
-        employeeService.updateEmployee(e);
+    @PutMapping("/{id}")
+    public ResponseEntity<ResponseMessage> updateEmployee(@PathVariable("id") Long id, @RequestBody EmployeeDto emp) {
+        employeeService.updateEmployee(emp);
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new ResponseMessage(ResponseCode.SUCCESS, "Success"));

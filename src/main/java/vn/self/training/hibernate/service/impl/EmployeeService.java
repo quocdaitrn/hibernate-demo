@@ -5,6 +5,7 @@ import org.hibernate.Transaction;
 import org.springframework.stereotype.Service;
 import vn.self.training.hibernate.dao.IEmployeeDao;
 import vn.self.training.hibernate.dao.impl.EmployeeDaoImpl;
+import vn.self.training.hibernate.dto.EmployeeDto;
 import vn.self.training.hibernate.model.Employee;
 import vn.self.training.hibernate.service.IEmployeeService;
 import vn.self.training.hibernate.util.HibernateUtil;
@@ -38,7 +39,7 @@ public class EmployeeService implements IEmployeeService {
     }
 
     @Override
-    public void updateEmployee(Employee e) {
+    public void updateEmployee(EmployeeDto e) {
         Session session = HibernateUtil.getSessionFactory().openSession();
         Transaction transaction = null;
         try {
@@ -67,6 +68,26 @@ public class EmployeeService implements IEmployeeService {
         } finally {
             session.close();
         }
+    }
+
+    @Override
+    public Employee findById(Long id) {
+        Employee emp;
+
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        Transaction transaction = null;
+        try {
+            transaction = session.beginTransaction();
+            emp = employeeDao.findById(session, id);
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null) transaction.rollback();
+            throw e;
+        } finally {
+            session.close();
+        }
+
+        return emp;
     }
 
     @Override
